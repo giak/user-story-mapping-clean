@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build
+dist
+dist-ssr
+*.local
+
+# Tests et Couverture
+coverage
+playwright-report
+test-results
+
+# Logs et Debug
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Environnement
+.env
+.env.*
+!.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Cache et Performance
+.eslintcache
+.stylelintcache
+.prettiercache
+*.tsbuildinfo
+stats.html
+.lighthouse
+bundle-stats.json
