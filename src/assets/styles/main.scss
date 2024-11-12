@@ -1,0 +1,10 @@
+
+@use "./scss/_font-face.scss";
+@use "./scss/_font.scss";
+@use "./scss/_base.scss";
+@use "./scss/_utilities.scss";
+@use "./scss/_variables.scss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+

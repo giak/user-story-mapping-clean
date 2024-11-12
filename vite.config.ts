@@ -1,16 +1,16 @@
+import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite"
+import vue from "@vitejs/plugin-vue"
 import { fileURLToPath, URL } from "node:url"
 import { resolve } from "path"
-import { defineConfig, loadEnv } from "vite"
-import vue from "@vitejs/plugin-vue"
-import vueDevTools from "vite-plugin-vue-devtools"
-import VueI18nPlugin from "@intlify/unplugin-vue-i18n/vite"
-import checker from "vite-plugin-checker"
 import { visualizer } from "rollup-plugin-visualizer"
+import { defineConfig, loadEnv } from "vite"
+import checker from "vite-plugin-checker"
+import vueDevTools from "vite-plugin-vue-devtools"
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Chargement des variables d environnement
-  const env = loadEnv(mode, process.cwd())
+  const env = loadEnv(mode, process.cwd(), '');
 
   return {
     root: process.cwd(),
@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => {
         "@application": fileURLToPath(new URL("./src/contexts/*/application", import.meta.url)),
         "@infrastructure": fileURLToPath(new URL("./src/contexts/*/infrastructure", import.meta.url)),
         "@presentation": fileURLToPath(new URL("./src/contexts/*/presentation", import.meta.url)),
-        "@shared": fileURLToPath(new URL("./src/shared", import.meta.url))
+        "@shared": fileURLToPath(new URL("./src/shared", import.meta.url)),
       },
       extensions: [".js", ".json", ".ts", ".tsx", ".vue"]
     },
@@ -112,6 +112,14 @@ export default defineConfig(({ mode }) => {
         "date-fns"
       ],
       exclude: ["@intlify/vue-i18n"]
-    }
+    },
+    css: {
+      postcss: {
+        plugins: [
+          require('tailwindcss'),
+          require('autoprefixer'),
+        ],
+      },
+    },
   }
 })

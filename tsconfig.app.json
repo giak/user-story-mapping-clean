@@ -14,12 +14,14 @@
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["src/*"],
       "@domain/*": ["./src/contexts/*/domain"],
       "@application/*": ["./src/contexts/*/application"],
       "@infrastructure/*": ["./src/contexts/*/infrastructure"],
       "@presentation/*": ["./src/contexts/*/presentation"],
-      "@shared/*": ["./src/shared/*"]
+      "@shared/*": ["./src/shared/*"],
+      "@assets/*": ["./src/assets/*"]
+
     },
     "types": ["node", "vite/client", "vitest", "vitest/globals"],
 
