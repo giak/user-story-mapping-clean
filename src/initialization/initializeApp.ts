@@ -1,10 +1,10 @@
-import 'reflect-metadata'; // Nécessaire pour inversify
 import router from "@/infrastructure/router";
+import { initializeStores } from "@/store";
+import 'reflect-metadata'; // Nécessaire pour inversify
 import type { App as VueApp } from "vue";
-import { initializePrimeVue } from "./plugins/primeVue";
-import { initializeStores } from "@/shared/store";
-import { initializeI18n } from "./plugins/i18n";
 import { initializeHead } from "./plugins/head";
+import { initializeI18n } from "./plugins/i18n";
+import { initializePrimeVue } from "./plugins/primeVue";
 
 /**
  * Initialize and configure the Vue application
@@ -17,6 +17,6 @@ export function initializeApplication(app: VueApp): void {
   initializeI18n(app);
   initializeHead(app);
 
-  // Initialize store data
+  // Initialize global store
   initializeStores(app);
 }
