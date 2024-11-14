@@ -109,17 +109,23 @@
 
   // Clean Architecture spécifique
   "material-icon-theme.folders.associations": {
-    "domain": "core",
+    "domain": "packages",
     "application": "app",
-    "infrastructure": "container",
+    "infrastructure": "tools",
     "presentation": "layout",
     "entities": "class",
     "value-objects": "shared",
     "repositories": "database",
     "use-cases": "functions",
-    "dtos": "typescript",
+    "dtos": "model",
     "mappers": "mappings",
-    "stores": "redux-store"
+    "stores": "redux-store",
+    "initialization": "container",
+    "store": "redux-store",
+    "shared": "shared",
+    "modules": "components",
+    "user": "client",
+    "composables": "functions"
   },
     "workbench.colorCustomizations": {
       "activityBar.activeBackground": "#ab307e",
@@ -140,5 +146,16 @@
       "titleBar.inactiveBackground": "#83256199",
       "titleBar.inactiveForeground": "#e7e7e799"
     },
-  "peacock.color": "#832561"
+  "peacock.color": "#832561",
+
+  // Extensions Vue.js recommandées
+  "extensions.ignoreRecommendations": false,
+
+  // Format & Lint
+  "prettier.singleQuote": true,
+  "prettier.semi": false,
+  "prettier.printWidth": 100,
+  "i18n-ally.localesPaths": [
+    "src/infrastructure/i18n"
+  ]
 }

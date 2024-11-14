@@ -50,3 +50,6 @@ Thumbs.db
 stats.html
 .lighthouse
 bundle-stats.json
+
+.cursorrules
+.cursorignore

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Schéma de validation pour les variables d'environnement
 const envSchema = z.object({
-  MODE: z.enum(['development', 'production', 'test']).default('development'),
+  VITE_APP_VERSION: z.string().default('1.0.0'),
   BASE_URL: z.string().default('/'),
   VITE_APP_TITLE: z.string().default('Vue App'),
   VITE_API_URL: z.string().url().optional(),
@@ -18,13 +18,13 @@ export type Env = z.infer<typeof envSchema>;
 export function loadEnvConfig(): Env {
   try {
     const env = {
-      MODE: import.meta.env.MODE,
+      VITE_APP_VERSION: import.meta.env.VITE_APP_VERSION,
       BASE_URL: import.meta.env.BASE_URL,
       VITE_APP_TITLE: import.meta.env.VITE_APP_TITLE,
       VITE_API_URL: import.meta.env.VITE_API_URL,
       VITE_LOG_LEVEL: import.meta.env.VITE_LOG_LEVEL,
       VITE_MAX_LOGS: Number(import.meta.env.VITE_MAX_LOGS),
-      NODE_ENV: process.env.NODE_ENV,
+      NODE_ENV: import.meta.env.NODE_ENV,
     };
 
     return envSchema.parse(env);
@@ -46,4 +46,4 @@ export class EnvConfig {
     }
     return EnvConfig.instance;
   }
-} 
+}
