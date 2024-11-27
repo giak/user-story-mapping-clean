@@ -4,6 +4,8 @@
 
 La couche domaine est le cœur de l'application. Elle contient toute la logique métier et les règles de l'application. Cette couche doit être pure, sans dépendances externes, et totalement indépendante des autres couches.
 
+> 🔗 Pour voir la place de cette couche dans l'architecture globale, consultez le [diagramme général](../01-introduction/01-overview.md#structure-simplifiée-de-la-clean-architecture-).
+
 ```mermaid
 ---
 config:
@@ -15,61 +17,111 @@ graph TB
     classDef service fill:#E1FFE4,stroke:#6BFF6B,stroke-width:2px;
     classDef repository fill:#FFE8D1,stroke:#FFB86B,stroke-width:2px;
     classDef specification fill:#D1E8FF,stroke:#6B8EFF,stroke-width:2px;
-    subgraph DomainLayer["Couche Domaine"]
+    classDef factory fill:#FFE8E8,stroke:#FF8888,stroke-width:2px;
+    classDef policy fill:#E8FFE8,stroke:#88FF88,stroke-width:2px;
+
+    subgraph DomainLayer["Couche Domaine - Détails"]
         subgraph Entities["Entités"]
-            Story["StoryEntity"]
-            Epic["EpicEntity"]
-            Sprint["SprintEntity"]
+            Story["Story"]
+            Epic["Epic"]
+            Sprint["Sprint"]
+            User["User"]
         end
+
         subgraph ValueObjects["Value Objects"]
             StoryPoints["StoryPoints"]
             StoryStatus["StoryStatus"]
             StoryTitle["StoryTitle"]
             StoryId["StoryId"]
+            Priority["Priority"]
+            SprintDates["SprintDates"]
         end
+
         subgraph DomainServices["Services Domaine"]
             PriorityService["PriorityService"]
             EstimationService["EstimationService"]
+            SprintPlanningService["SprintPlanningService"]
         end
+
         subgraph Repositories["Interfaces Repository"]
             StoryRepo["StoryRepository"]
             EpicRepo["EpicRepository"]
+            SprintRepo["SprintRepository"]
         end
+
         subgraph Specifications["Spécifications"]
             ReadySpec["ReadyForSprintSpec"]
             PrioritySpec["HighPrioritySpec"]
+            CompleteSpec["CompletableSpec"]
         end
+
+        subgraph Factories["Factories"]
+            StoryFactory["StoryFactory"]
+            SprintFactory["SprintFactory"]
+        end
+
+        subgraph Policies["Policies"]
+            StoryPolicy["StoryPolicy"]
+            SprintPolicy["SprintPolicy"]
+        end
+
+        %% Relations détaillées
         Story --> Epic
         Story --> Sprint
         Story --> StoryPoints
         Story --> StoryStatus
         Story --> StoryTitle
         Story --> StoryId
+        Story --> Priority
+        Sprint --> SprintDates
+        Sprint --> User
+
         PriorityService --> Story
         EstimationService --> Story
+        SprintPlanningService --> Sprint
+
         StoryRepo -.-> Story
         EpicRepo -.-> Epic
+        SprintRepo -.-> Sprint
+
         ReadySpec -.-> Story
         PrioritySpec -.-> Story
+        CompleteSpec -.-> Story
+
+        StoryFactory --> Story
+        SprintFactory --> Sprint
+
+        StoryPolicy --> Story
+        SprintPolicy --> Sprint
     end
-    class Story,Epic,Sprint entity;
-    class StoryPoints,StoryStatus,StoryTitle,StoryId valueObject;
-    class PriorityService,EstimationService service;
-    class StoryRepo,EpicRepo repository;
-    class ReadySpec,PrioritySpec specification;
+
+    %% Application des styles
+    class Story,Epic,Sprint,User entity;
+    class StoryPoints,StoryStatus,StoryTitle,StoryId,Priority,SprintDates valueObject;
+    class PriorityService,EstimationService,SprintPlanningService service;
+    class StoryRepo,EpicRepo,SprintRepo repository;
+    class ReadySpec,PrioritySpec,CompleteSpec specification;
+    class StoryFactory,SprintFactory factory;
+    class StoryPolicy,SprintPolicy policy;
+
+    %% Légende
     subgraph Légende
         E["🏛️ Entité"]
         VO["💎 Value Object"]
         S["⚙️ Service"]
         R["📚 Repository"]
         SP["🎯 Specification"]
+        F["🏭 Factory"]
+        P["📋 Policy"]
     end
+
     class E entity;
     class VO valueObject;
     class S service;
     class R repository;
     class SP specification;
-
+    class F factory;
+    class P policy;
 ```
 
 ## Composants Principaux
@@ -100,7 +152,7 @@ export interface StoryPropsInterface {
 export interface StoryEntityInterface {
   readonly id: StoryIdValueObjectInterface;
   readonly props: Readonly<StoryPropsInterface>;
-  
+
   equals(other: StoryEntityInterface): boolean;
   canBeCompleted(): boolean;
   complete(): ResultInterface<void>;
@@ -194,7 +246,7 @@ export class StoryEntity implements StoryEntityInterface {
 // src/contexts/story/domain/value-objects/story-points.value-object.ts
 export interface StoryPointsValueObjectInterface {
   readonly value: number;
-  
+
   equals(other: StoryPointsValueObjectInterface): boolean;
   isEstimated(): boolean;
   isHighEffort(): boolean;
@@ -477,7 +529,7 @@ export class StoryEntity {
 // ❌ Mauvais : Entité mutable avec setters
 export class StoryEntity {
   private title: string;
-  
+
   setTitle(title: string): void {
     this.title = title; // Mutation directe ❌
   }
@@ -536,7 +588,7 @@ export class SprintEntity {
 export class Sprint {
   public stories: Story[];
   public maxPoints: number;
-  
+
   // Règles métier accessibles de l'extérieur ❌
   public currentPoints: number;
   public isLocked: boolean;
@@ -645,7 +697,7 @@ describe("Story", () => {
   it("should validate story", async () => {
     const api = new ApiClient(); // ❌ Dépendance externe
     const story = new Story(api);
-    
+
     await story.validate(); // ❌ Appel asynchrone
   });
 });
@@ -699,11 +751,11 @@ export class StoryEntity {
 export class StoryEntity {
   private _status: string;
   private _points: number;
-  
+
   setStatus(status: string): void {
     this._status = status;  // ❌ Mutation directe
   }
-  
+
   setPoints(points: number): void {
     this._points = points;  // ❌ Mutation directe
   }
@@ -735,7 +787,7 @@ export class CompleteStoryUseCase {
     if (story.points > 13 || !story.hasTests) {
       throw new Error("Cannot complete story");
     }
-    
+
     if (story.assignee === null) {
       throw new Error("Story must be assigned");
     }
@@ -768,7 +820,7 @@ export class StoryEntity {
   public title: string;
   public status: string;
   public points: number;
-  
+
   // ❌ Pas de comportement, juste des getters/setters
   getId(): string { return this.id; }
   setTitle(title: string): void { this.title = title; }
@@ -801,7 +853,7 @@ export class StoryEntity {
 export class SprintEntity {
   public stories: StoryEntity[] = [];  // ❌ Propriété publique
   public maxPoints: number;            // ❌ Propriété publique
-  
+
   addStory(story: StoryEntity): void {
     this.stories.push(story);  // ❌ Pas de validation
   }
@@ -810,18 +862,18 @@ export class SprintEntity {
 // ✅ Bon : Encapsulation forte
 export class SprintEntity {
   private readonly stories: Map<string, StoryEntity>;
-  
+
   public addStory(story: StoryEntity): ResultInterface<void> {
     if (!this.canAddStory(story)) {
       return Result.fail(new DomainError("Cannot add story to sprint"));
     }
-    
+
     this.stories.set(story.id.value, story);
     return Result.ok();
   }
 
   private canAddStory(story: StoryEntity): boolean {
-    return this.hasCapacity(story.points) && 
+    return this.hasCapacity(story.points) &&
            !this.hasStory(story.id);
   }
 }
@@ -833,7 +885,7 @@ export class SprintEntity {
 // ❌ Mauvais : Dépendances circulaires entre entités
 export class StoryEntity {
   constructor(private readonly epic: EpicEntity) {}
-  
+
   moveToEpic(newEpic: EpicEntity): void {
     this.epic.removeStory(this);
     newEpic.addStory(this);
@@ -847,7 +899,7 @@ export class StoryEntity {
     if (this.props.epicId.equals(newEpicId)) {
       return Result.fail(new DomainError("Story already in this epic"));
     }
-    
+
     return this.update({ epicId: newEpicId });
   }
 }
@@ -860,7 +912,7 @@ export class StoryEntity {
 describe("StoryEntity", () => {
   let api: ApiClient;
   let db: Database;
-  
+
   beforeEach(async () => {
     api = new ApiClient();  // ❌ Dépendance externe
     db = await Database.connect();  // ❌ Dépendance externe
@@ -913,41 +965,41 @@ sequenceDiagram
 
     UC->>Entity: Story.create(props)
     activate Entity
-    
+
     Entity->>VO: StoryId.create()
     Entity->>VO: StoryTitle.validate()
     Entity->>VO: StoryPoints.validate()
-    
+
     alt Validation Success
         Entity-->>UC: Result.ok(Story)
-        
+
         UC->>Service: priorityService.calculate(story)
         Service-->>UC: priority
-        
+
         UC->>Spec: readyForSprintSpec.isSatisfiedBy(story)
         Spec-->>UC: isReady
-        
+
         UC->>Repo: save(story)
-        
+
         UC->>Event: publish(StoryCreatedEvent)
     else Validation Error
         VO-->>Entity: ValidationError
         Entity-->>UC: Result.fail(error)
     end
-    
+
     deactivate Entity
 
     Note over UC,Event: Flux de Mise à Jour du Status
 
     UC->>Entity: story.updateStatus(newStatus)
     activate Entity
-    
+
     Entity->>VO: StoryStatus.validate()
-    
+
     alt Valid Status Transition
         Entity->>Service: workflowService.canTransition(current, new)
         Service-->>Entity: isAllowed
-        
+
         alt Transition Allowed
             Entity-->>UC: Result.ok(updatedStory)
             UC->>Event: publish(StoryStatusChangedEvent)
@@ -958,40 +1010,40 @@ sequenceDiagram
         VO-->>Entity: ValidationError
         Entity-->>UC: Result.fail(error)
     end
-    
+
     deactivate Entity
 
     Note over UC,Event: Flux de Validation Métier
 
     UC->>Entity: story.complete()
     activate Entity
-    
+
     Entity->>Spec: completableSpec.isSatisfiedBy(this)
-    
+
     alt Can Complete
         Entity->>Service: completionService.process(this)
         Service-->>Entity: Result.ok()
-        
+
         Entity-->>UC: Result.ok(completedStory)
         UC->>Event: publish(StoryCompletedEvent)
     else Cannot Complete
         Spec-->>Entity: false
         Entity-->>UC: Result.fail(BusinessError)
     end
-    
+
     deactivate Entity
 
     Note over UC,Event: Flux d'Agrégation
 
     UC->>Entity: epic.addStory(story)
     activate Entity
-    
+
     Entity->>Service: aggregationService.validateAddition(epic, story)
     Service->>Spec: addableSpec.isSatisfiedBy(story)
-    
+
     alt Can Add
         Entity->>VO: EpicCapacity.validate(currentStories + story)
-        
+
         alt Within Capacity
             Entity-->>UC: Result.ok(updatedEpic)
             UC->>Event: publish(StoryAddedToEpicEvent)
@@ -1004,6 +1056,6 @@ sequenceDiagram
         Service-->>Entity: Result.fail(ValidationError)
         Entity-->>UC: Result.fail(error)
     end
-    
+
     deactivate Entity
 ```

@@ -288,7 +288,7 @@ Cette organisation permet de :
 
 ### Structure d'un Contexte
 ```bash
-contexts/{context}/
+contexts/story/
 ├── application/         # Couche applicative orchestrant les cas d'utilisation
 │   ├── commands/       # Commandes CQRS pour les opérations modifiant l'état
 │   │   ├── CreateStoryCommand.ts
@@ -961,6 +961,12 @@ StoryAggregate.ts
 // Value Objects (PascalCase + ValueObject)
 StoryIdValueObject.ts
 StoryStatusValueObject.ts
+
+// Interfaces (PascalCase + UseCase)
+StoryInterface.ts
+
+// Types (PascalCase + UseCase)
+StoryType.ts
 
 // Use Cases (PascalCase + UseCase)
 CreateStoryUseCase.ts

@@ -1,4 +1,4 @@
-# Structure d'un Contexte
+# Structure d'un Contexte 🏗️
 
 ## Vue d'ensemble
 
@@ -13,7 +13,7 @@ graph TD
     classDef application fill:#DAE8FC,stroke:#6C8EBF,stroke-width:2px
     classDef infrastructure fill:#D5E8D4,stroke:#82B366,stroke-width:2px
     classDef presentation fill:#F8CECC,stroke:#B85450,stroke-width:2px
-    
+
     %% Root
     Story[contexts/story]
 
@@ -190,10 +190,10 @@ export class Story extends AggregateRoot {
     // Création sécurisée
     const id = StoryId.generate();
     const story = new Story(props, id);
-    
+
     // Événement de création
     story.addDomainEvent(new StoryCreatedEvent(story));
-    
+
     return Result.ok(story);
   }
 
@@ -202,7 +202,7 @@ export class Story extends AggregateRoot {
     if (!this.canChangeStatus(status)) {
       return Result.fail("Changement de statut non autorisé");
     }
-    
+
     this.props.status = status;
     return Result.ok();
   }
@@ -263,7 +263,7 @@ Les Value Objects sont des objets immutables qui décrivent des caractéristique
 - Peuvent être composés d'autres Value Objects
 - Partagés entre différentes Entities
 - Facilement sérialisables/désérialisables
-- 
+-
 ![Domain Layer - Value Objects](./domain-layer-value-objects.svg)
 
 **Implémentation**
@@ -464,7 +464,7 @@ export interface StoryListItemDTOInterface {
      id: string;
      title: string;
    }
-   
+
    // API V2
    interface StoryV2DTO extends StoryV1DTO {
      description: string;
@@ -664,12 +664,12 @@ class CreateProjectUseCase {
   async execute(params: CreateProjectDTO): Promise<Result<void>> {
     try {
       await this.beginTransaction();
-      
+
       // Séquence d'opérations
       await this.createProject();
       await this.setupTeam();
       await this.initializeBoards();
-      
+
       await this.commitTransaction();
     } catch (error) {
       await this.rollbackTransaction();
@@ -740,9 +740,9 @@ export class StoryRepositoryImpl implements StoryRepository {
       // 2. Accéder à la base de données
       const data = await this.database.stories.findUnique({
         where: { id: id.toString() },
-        include: { 
+        include: {
           assignee: true,
-          comments: true 
+          comments: true
         }
       });
 
@@ -883,7 +883,7 @@ class StoryRepositoryWithAggregates extends StoryRepositoryImpl {
         this.getComments(id),
         this.getHistory(id)
       ]);
-      
+
       return new StoryAggregate(story, comments, history);
     });
   }
@@ -938,7 +938,7 @@ const statusColor = computed(() => {
    export interface StoryRepositoryInterface {
      findById(id: StoryId): Promise<Result<Story>>;
    }
-   
+
    export interface CreateStoryUseCaseInterface {
      execute(dto: CreateStoryDTOInterface): Promise<Result<StoryDTOInterface>>;
    }
@@ -970,7 +970,7 @@ const statusColor = computed(() => {
   ```typescript
   // ❌ Mauvais : Dépendance directe entre contextes
   import { User } from "@/contexts/user/domain/entities/User";
-   
+
   // ✅ Bon : Interface pour la communication
   interface StoryAssigneeInterface {
     id: string;
@@ -984,7 +984,7 @@ const statusColor = computed(() => {
   class Story {
     assignTo(user: User) { ... }
   }
-   
+
   // ✅ Bon : Communication via interfaces
   class Story {
     assignTo(assignee: AssigneeInterface) { ... }
@@ -996,14 +996,14 @@ const statusColor = computed(() => {
 // 1. Imports externes (frameworks, librairies)
 import { ref, computed } from "vue";
 import { inject } from "vue-di";
-   
+
 // 2. Imports du même contexte
 import { Story } from "../../domain/entities/Story";
 import { StoryStatus } from "../../domain/value-objects/StoryStatus";
-   
+
 // 3. Imports d'autres contextes (via interfaces)
 import type { UserReference } from "@/contexts/user/application/dtos/UserDTO";
-   
+
 // 4. Imports partagés
 import { Result } from "@/shared/types/Result";
 import { dateFormatter } from "@/shared/utils/dateFormatter";
@@ -1017,7 +1017,7 @@ import { dateFormatter } from "@/shared/utils/dateFormatter";
   export function createStory() { ... }
   export function validateStory() { ... }
   export function formatStoryDate() { ... }
-   
+
   // ✅ Bon : Responsabilité unique
   // StoryFactory.ts
   export class StoryFactory {
@@ -1030,7 +1030,7 @@ import { dateFormatter } from "@/shared/utils/dateFormatter";
   ```typescript
   // Entités : PascalCase, nom significatif
   Story.ts, StoryId.ts
-   
+
   // Value Objects : PascalCase + ValueObject
   StoryStatusValueObject.ts, PriorityValueObject.ts
   ```
@@ -1039,7 +1039,7 @@ import { dateFormatter } from "@/shared/utils/dateFormatter";
   ```typescript
   // Use Cases : Verbe + Nom + UseCase
   CreateStoryUseCase.ts, AssignStoryUseCase.ts
-   
+
   // Services : Nom + Service
   StoryDomainService.ts, NotificationService.ts
   ```
@@ -1132,7 +1132,7 @@ class CreateStoryUseCase {
     if (validationResult.isFailure) {
       return Result.fail(validationResult.error);
     }
-    
+
     // Suite du traitement
   }
 }
@@ -1146,3 +1146,105 @@ class StoryRepository {
   }
 }
 ```
+
+## Structure des Composants
+
+### Organisation des Composants dans un Contexte
+
+Les composants d'un contexte sont organisés dans `/presentation/components` selon les principes suivants :
+
+1. **Hiérarchie des Composants**
+   ```
+   /components
+   ├── /data-display        # Composants d'affichage de données
+   │   ├── StoryCard.vue    # Carte d'affichage d'une story
+   │   └── StoryList.vue    # Liste de stories
+   ├── /forms              # Composants de formulaires
+   │   ├── StoryForm.vue   # Formulaire de story
+   │   └── StatusSelect.vue # Sélecteur de statut
+   └── /layout             # Composants de mise en page
+       ├── StoryHeader.vue # En-tête de story
+       └── StoryGrid.vue   # Grille de stories
+   ```
+
+2. **Composition des Composants**
+   ```vue
+   <!-- StoryCard.vue -->
+   <template>
+     <div class="story-card">
+       <story-header :title="story.title" />
+       <story-status :status="story.status" />
+       <story-actions :storyId="story.id" />
+     </div>
+   </template>
+   ```
+
+### Bonnes Pratiques des Composants
+
+#### Architecture des Composants
+- Un composant = une responsabilité unique
+- Composition plutôt qu'héritage
+- Props pour la configuration
+- Events pour la communication
+
+#### Exemple d'Implémentation
+```vue
+<!-- StoryForm.vue -->
+<template>
+  <form @submit.prevent="handleSubmit">
+    <base-input
+      v-model="form.title"
+      :validation="validations.title"
+    />
+    <status-select
+      v-model="form.status"
+      :options="statusOptions"
+    />
+    <base-button type="submit">
+      {{ isEdit ? 'Update' : 'Create' }} Story
+    </base-button>
+  </form>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { useStoryValidation } from '../composables/useStoryValidation';
+import type { StoryFormData } from '../types';
+
+const props = defineProps<{
+  initialData?: StoryFormData;
+  isEdit?: boolean;
+}>();
+
+const emit = defineEmits<{
+  (event: 'submit', data: StoryFormData): void;
+}>();
+
+const form = ref<StoryFormData>(props.initialData ?? {
+  title: '',
+  status: 'TODO'
+});
+
+const { validations } = useStoryValidation(form);
+
+const handleSubmit = () => {
+  if (validations.value.isValid) {
+    emit('submit', form.value);
+  }
+};
+</script>
+```
+
+### Anti-patterns à Éviter dans les Composants
+
+❌ **Ne pas faire**
+- Logique métier dans les composants
+- Props en mutation directe
+- État global dans les composants
+- Composants monolithiques
+
+✅ **Bonnes pratiques**
+- Utiliser les composables pour la logique
+- Props immutables
+- État local minimal
+- Composants petits et focalisés

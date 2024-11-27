@@ -149,6 +149,133 @@ Organisation des ressources statiques :
         └── _light.scss
 ```
 
+## Dépendances Détaillées par Couche
+
+### 1. Vue Globale des Dépendances
+
+```mermaid
+---
+config:
+  layout: elk
+---
+flowchart LR
+ subgraph Global["🌍 Couches Globales"]
+    direction TB
+        AS["📁 assets"]
+        GI["🔧 infrastructure"]
+        GP["🎨 presentation"]
+        SH["🔄 shared"]
+        ST["📦 store"]
+  end
+ subgraph PRE["🎯 Presentation"]
+    direction TB
+        COMP["🧩 components"]
+        VIEWS["👁️ views"]
+        STORES["💾 stores"]
+  end
+ subgraph APP["⚙️ Application"]
+    direction TB
+        UC["📋 use-cases"]
+        SERV["⚡ services"]
+        PORT["🔌 ports"]
+        DTO["📤 dtos"]
+  end
+ subgraph DOM["💎 Domain"]
+    direction TB
+        ENT["📊 entities"]
+        VO["🎯 value-objects"]
+        REPO["📚 repositories"]
+        DSERV["⚡ domain-services"]
+  end
+ subgraph INF["🏗️ Infrastructure"]
+    direction TB
+        IMPL["📥 repositories-impl"]
+        ADAP["🔄 adapters"]
+        PERS["💽 persistence"]
+  end
+ subgraph CTX["✨ Contexte"]
+    direction TB
+        PRE
+        APP
+        DOM
+        INF
+  end
+ subgraph Légende["📝 Légende"]
+        L1["---> Dépendance interne"]
+        L2["-.- Dépendance externe"]
+  end
+    COMP ---> UC
+    VIEWS ---> UC
+    STORES ---> UC & DTO
+    UC ---> ENT & VO & DSERV
+    SERV ---> ENT
+    PORT ---> REPO
+    IMPL ---> REPO & PORT
+    ADAP ---> PORT
+    COMP -.-> GP & SH & AS
+    VIEWS -.-> GP & SH & AS
+    STORES -.-> ST
+    UC -.-> SH
+    SERV -.-> SH
+    IMPL -.-> GI
+    ADAP -.-> GI
+    PERS -.-> GI
+    classDef default fill:#fff,stroke:#333,stroke-width:1px
+    classDef roundedClass rx:10,ry:10
+    classDef subgraphStyle fill:none,stroke:#666,stroke-width:1px,rx:10,ry:10
+    style AS fill:#f5f5f5,stroke:#333,stroke-width:2px
+    style GI fill:#f5f5f5,stroke:#333,stroke-width:2px
+    style GP fill:#f5f5f5,stroke:#333,stroke-width:2px
+    style SH fill:#f5f5f5,stroke:#333,stroke-width:2px
+    style ST fill:#f5f5f5,stroke:#333,stroke-width:2px
+    style COMP fill:#ffebee,stroke:#333,stroke-width:2px
+    style VIEWS fill:#ffebee,stroke:#333,stroke-width:2px
+    style STORES fill:#ffebee,stroke:#333,stroke-width:2px
+    style UC fill:#e3f2fd,stroke:#333,stroke-width:2px
+    style SERV fill:#e3f2fd,stroke:#333,stroke-width:2px
+    style PORT fill:#e3f2fd,stroke:#333,stroke-width:2px
+    style DTO fill:#e3f2fd,stroke:#333,stroke-width:2px
+    style ENT fill:#f3e5f5,stroke:#333,stroke-width:2px
+    style VO fill:#f3e5f5,stroke:#333,stroke-width:2px
+    style REPO fill:#f3e5f5,stroke:#333,stroke-width:2px
+    style DSERV fill:#f3e5f5,stroke:#333,stroke-width:2px
+    style IMPL fill:#e8f5e9,stroke:#333,stroke-width:2px
+    style ADAP fill:#e8f5e9,stroke:#333,stroke-width:2px
+    style PERS fill:#e8f5e9,stroke:#333,stroke-width:2px
+    style L1 fill:#fff,stroke:#333,stroke-width:2px
+    style L2 fill:#fff,stroke:#333,stroke-width:2px
+
+```
+
+### 2. Dépendances par Couche
+
+![Flux de données](//www.plantuml.com/plantuml/png/RPDHQjj048RVznJJ-A7jGmofMxS1LoIoPGZqeP1SOD5EfCNIhfXTaOIwq4Fq4Zr7RzAJL9QIQAHTC1ZDVFDxz0s-SbwIR-jAlF4brWYr92U4EsZJI98r4EPUcg92-24005AP7mgohL5RMrdQR5mf2LMIm48f5KUKhQKs9oHDTza-ZLEoQIgTIwzjZ-xt-yljnpYgpJr9vwdDVKjuehEBDCi-n-c6qA7nhydRBzbwUnbddRU4SyYIGke1MAnMArQyAtL-CEWSV10_kRPh8llmFB9Uh-UTSUvY-Kc8KVBPRQyJliadf3EG3eP2_moZRJwow_MoaQ4mZ8ps-SZrw9hDiUemF3iAJxYPd825J1j3JdWn7lMTtOS5yV8GCp_bn9ktapNwvs7izQf2l8NiqICPMO721er2asjqy4vPxr6z5zpsSfbmbK6Fwue2eOg02Tuo8DYR2BPDtsAeuDj4WN2Ra0cTpmdcTTxgxDwOg5rdAzt9vUkVduS2vq0eC6H2WQ69U5GS3FEYukAagB10eu1qKNfn_0ftJmr2ztsh2wFlN_vnHt7SB1vAxJ61Vxz_TPy4Zh3x--VaJ9eSGVSUaPETxZc5ZozKLnb-MboXKMrT_GS0)
+
+
+### 3. Flux de Données Détaillé
+
+```mermaid
+sequenceDiagram
+    participant V as View
+    participant S as Store
+    participant UC as UseCase
+    participant DS as DomainService
+    participant E as Entity
+    participant R as Repository
+    participant DB as Database
+
+    V->>S: User Action
+    S->>UC: Command/Query
+    UC->>DS: Business Operation
+    DS->>E: Domain Logic
+    UC->>R: Data Operation
+    R->>DB: Database Query
+    DB-->>R: Raw Data
+    R-->>UC: Domain Objects
+    UC-->>S: DTO/Result
+    S-->>V: Updated State
+```
+
 ## Bonnes Pratiques
 
 ### 1. Organisation des Dossiers
@@ -253,7 +380,6 @@ Organisation des ressources statiques :
 - Maintenir une séparation claire des préoccupations
 - Utiliser des noms explicites et cohérents
 - Documenter les choix d'architecture
-
 ### 6. Gestion des Dépendances
 
 ![La gestion des dépendances](./gestion-dependances.svg)
@@ -269,7 +395,7 @@ config:
 graph TB
     subgraph "Clean Architecture Layers"
         direction TB
-        
+
         %% Nodes internes
         P[Presentation Layer<br>Interface utilisateur]
         I[Infrastructure Layer<br>Implémentation technique]
@@ -314,30 +440,60 @@ graph TB
     %% Légende
     subgraph "Légende"
         L1["--> Dépendances internes"]
-        L2["-.-> Dépendances externes"]
+        L2["-.- Dépendances externes"]
     end
 ```
 
 #### Principes des dépendances :
 
-1. **Dépendances Internes** (flèches pleines)
-   - Pointent toujours vers le Domain Layer
-   - Suivent les principes Clean Architecture
-   - Garantissent l'isolation du domaine
+1. **Règle de Dépendance**
+   - Les dépendances ne peuvent pointer que vers l'intérieur
+   - Le Domain Layer ne dépend de rien d'autre
+   - L'Application Layer ne dépend que du Domain Layer
+   - L'Infrastructure Layer implémente les interfaces du Domain Layer
 
-2. **Dépendances Externes** (flèches pointillées)
-   - Gérées par l'Infrastructure Layer
-   - Isolées par des interfaces
-   - Facilement remplaçables
+2. **Communication entre Couches**
+   ```typescript
+   // Domain Layer - Définit les interfaces
+   interface StoryRepository {
+     findById(id: string): Promise<Story>;
+   }
 
-3. **Règles de Protection**
-   - Domain Layer protégé des dépendances externes
-   - Infrastructure Layer encapsule les services externes
-   - Presentation Layer isolée des détails d'implémentation
+   // Infrastructure Layer - Implémente les interfaces
+   class StoryRepositoryImpl implements StoryRepository {
+     findById(id: string): Promise<Story> {
+       // Implémentation avec la base de données
+     }
+   }
 
-### 7. Scalabilité
+   // Application Layer - Utilise les interfaces
+   class GetStoryUseCase {
+     constructor(private repository: StoryRepository) {}
 
-- Prévoir la croissance du projet
-- Faciliter l'ajout de nouveaux contextes
-- Permettre la réorganisation sans casser la structure
-- Maintenir la cohérence à l'échelle du projet
+     execute(id: string): Promise<Story> {
+       return this.repository.findById(id);
+     }
+   }
+   ```
+
+3. **Inversion des Dépendances**
+   - Les modules de haut niveau ne dépendent pas des modules de bas niveau
+   - Les deux dépendent d'abstractions
+   - Les abstractions ne dépendent pas des détails
+   - Les détails dépendent des abstractions
+
+4. **Flux de Données**
+```mermaid
+   sequenceDiagram
+       participant P as Presentation
+       participant A as Application
+       participant D as Domain
+       participant I as Infrastructure
+
+       P->>A: Command/Query
+       A->>D: Domain Operation
+       A->>I: Repository Call
+       I-->>A: Data
+       A-->>P: DTO/Result
+```
+

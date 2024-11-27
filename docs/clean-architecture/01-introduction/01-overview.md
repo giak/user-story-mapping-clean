@@ -74,148 +74,79 @@ Sa complexité initiale et sa courbe d'apprentissage importante nécessitent :
 ![](./all-methodologies.svg)
 
 
-## Architecture Globale de la Clean Architecture 🏢
-
-
-![La Clean Architecture basique](./layers_global.svg)
+## Structure Simplifiée de la Clean Architecture 🎯
 
 ```mermaid
-graph TB
-    subgraph "Clean Architecture Layers"
-        UI[Presentation Layer<br/>Vue.js Components]
-        CONTROLLERS[Application Layer<br/>Use Cases]
-        BUSINESS[Domain Layer<br/>Business Rules]
-        DB[Infrastructure Layer<br/>External Interfaces]
-
-        UI --> CONTROLLERS
-        CONTROLLERS --> BUSINESS
-        DB --> BUSINESS
-
-        classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px;
-        classDef domain fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
-        classDef infra fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
-
-        class BUSINESS domain;
-        class DB,UI infra;
-    end
-```
-
-## Principes Fondamentaux 🎯
-
-### 1. Indépendance des Frameworks 🔄
-- Vue.js et autres outils sont des détails d'implémentation
-- La logique métier reste stable et indépendante
-- Facilite les migrations technologiques
-
-### 2. Testabilité 🧪
-- Tests unitaires sans dépendances externes
-- Mocking simplifié grâce aux interfaces
-- Couverture de code optimale
-
-### 3. Indépendance de l'UI 🎨
-- Interface utilisateur interchangeable
-- Séparation claire présentation/logique
-- Support multiple interfaces (web, mobile, CLI)
-
-## Structure des Couches 📚
-
-```mermaid
-graph TB
-    subgraph "Layers Detail"
+---
+config:
+  theme: base
+  look: classic
+---
+flowchart TB
+    subgraph Presentation["️ Presentation Layer"]
         direction TB
-
-        subgraph Presentation["Presentation Layer"]
-            VUE[Vue Components]
-            STORE[Pinia Stores]
-            COMPOSABLES[Vue Composables]
-        end
-
-        subgraph Application["Application Layer"]
-            USECASES[Use Cases]
-            DTOS[DTOs]
-            PORTS[Ports]
-        end
-
-        subgraph Domain["Domain Layer"]
-            ENTITIES[Entities]
-            VALUEOBJ[Value Objects]
-            REPOS[Repository Interfaces]
-        end
-
-        subgraph Infrastructure["Infrastructure Layer"]
-            REPOIMPL[Repository Impl]
-            API[API Clients]
-            DB[Database]
-        end
-
-        %% Connections
-        VUE --> STORE
-        STORE --> USECASES
-        USECASES --> ENTITIES
-        REPOIMPL --> REPOS
-
-        classDef presentation fill:#f8cecc,stroke:#b85450;
-        classDef application fill:#dae8fc,stroke:#6c8ebf;
-        classDef domain fill:#d5e8d4,stroke:#82b366;
-        classDef infrastructure fill:#ffe6cc,stroke:#d79b00;
-
-        class VUE,STORE,COMPOSABLES presentation;
-        class USECASES,DTOS,PORTS application;
-        class ENTITIES,VALUEOBJ,REPOS domain;
-        class REPOIMPL,API,DB infrastructure;
+        UI["Vue Components"]
+        Store["State Management<br>(Pinia)"]
+        Composables["Vue Composables"]
+        I18n["Localization"]
+        Mixins["Mixins & Transitions"]
     end
+
+    subgraph Application["⚙️ Application Layer"]
+        direction TB
+        UseCases["Use Cases"]
+        DTOs["DTOs"]
+        Ports["Ports"]
+        CQRS["Commands & Queries"]
+        AppServices["Application Services"]
+    end
+
+    subgraph Domain["💎 Domain Layer"]
+        direction TB
+        Entities["Entities"]
+        ValueObjects["Value Objects"]
+        Repositories["Repository Interfaces"]
+        DomainEvents["Errors & Events"]
+        DomainServices["Policies & Services"]
+    end
+
+    subgraph Infrastructure["🔧 Infrastructure Layer"]
+        direction TB
+        RepoImpl["Repository Implementations"]
+        ExternalServices["External Services"]
+        Adapters["Adapters & Persistence"]
+    end
+
+    %% Connexions entre les couches
+    UI --> Store
+    Store --> UseCases
+    UseCases --> Entities
+    RepoImpl --> Repositories
+
+    %% Styles
+    classDef presentation fill:#C8E6C9,stroke:#2E7D32,stroke-width:2px
+    classDef application fill:#BBDEFB,stroke:#1565C0,stroke-width:2px
+    classDef domain fill:#FFE0B2,stroke:#EF6C00,stroke-width:2px
+    classDef infrastructure fill:#F8BBD0,stroke:#C2185B,stroke-width:2px
+
+    %% Application des styles
+    class UI,Store,Composables,I18n,Mixins presentation
+    class UseCases,DTOs,Ports,CQRS,AppServices application
+    class Entities,ValueObjects,Repositories,DomainEvents,DomainServices domain
+    class RepoImpl,ExternalServices,Adapters infrastructure
+
+    %% Styles des subgraphs
+    style Presentation fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px
+    style Application fill:#E3F2FD,stroke:#1565C0,stroke-width:2px
+    style Domain fill:#FFF3E0,stroke:#EF6C00,stroke-width:2px
+    style Infrastructure fill:#FCE4EC,stroke:#C2185B,stroke-width:2px
 ```
 
-
-### Séparation des Préoccupations (SoC) 🔄
-
-
-[📦 Vous trouverez de plus amples explications ici : 🚀 **Cours sur les Principes SOLID en JavaScript/TypeScript** 🎯](https://www.linkedin.com/pulse/cours-sur-les-principes-solid-en-javascripttypescript-giacomel--r4jce/)
-
-La SoC est un principe fondamental qui s'aligne parfaitement avec les principes SOLID.
-
-#### **Distribution des Responsabilités via SOLID**
-
-**Single Responsibility (S)** 📌
-Chaque couche a une responsabilité unique et clairement définie :
-- 🎨 Présentation : Interface utilisateur uniquement
-- ⚙️ Application : Orchestration des cas d'utilisation
-- 💎 Domaine : Règles métier et entités
-- 🔧 Infrastructure : Détails techniques et persistance
-
-**Open/Closed (O)** 🔄
-Les couches sont :
-- Ouvertes à l'extension (nouveaux cas d'utilisation, nouvelles entités)
-- Fermées à la modification (les interfaces restent stables)
-- Permet d'ajouter des fonctionnalités sans modifier le code existant
-
-**Liskov Substitution (L)** 🔄
-- Les implémentations concrètes peuvent être substituées :
-- Repositories concrets ⟺ Interfaces de repository
-- Services d'infrastructure ⟺ Ports applicatifs
-- Facilite les tests et le changement d'implémentations
-
-**Interface Segregation (I)** 🔌
-- Interfaces spécifiques pour chaque besoin :
-- Ports dédiés par cas d'utilisation
-- Repositories spécialisés par agrégat
-- DTOs spécifiques aux besoins
-
-**Dependency Inversion (D)** ⬆️
-- Les dépendances pointent vers l'intérieur :
-- Infrastructure → Application → Domaine
-- Les couches internes définissent les interfaces
-- Les couches externes implémentent ces interfaces
-
-#### **Bénéfices pour l'Architecture**
-- **Découplage** : Les couches sont indépendantes et peuvent évoluer séparément
-- **Testabilité** : Chaque couche peut être testée isolément
-- **Maintenabilité** : Les changements sont localisés et prévisibles
-- **Évolutivité** : Nouvelles fonctionnalités sans impact sur l'existant
-
-<img src="./SoC.svg" alt="Séparation des préoccupations (SoC)" width="500">
-
-
+> 📚 Pour une vue détaillée de chaque couche, consultez les diagrammes spécifiques :
+> - [Diagramme détaillé de la couche Présentation](../02-layers/01-presentation-layer.md)
+> - [Diagramme détaillé de la couche Application](../02-layers/02-application-layer.md)
+> - [Diagramme détaillé de la couche Domaine](../02-layers/03-domain-layer.md)
+> - [Diagramme détaillé de la couche Infrastructure](../02-layers/04-infrastructure-layer.md)
 
 ## Description des Couches 🏢
 
@@ -232,6 +163,10 @@ Les couches sont :
   - Logique réutilisable
   - Gestion des effets
   - Abstraction des comportements
+- **Localisation**
+  - Traductions spécifiques au contexte
+- **Mixins et Transitions**
+  - Logique partagée et animations
 
 ### 2. Couche Application (Application Layer) ⚙️
 - **Use Cases**
@@ -246,6 +181,10 @@ Les couches sont :
   - Interfaces des services
   - Contrats d'intégration
   - Points d'extension
+- **Commandes et Requêtes**
+  - CQRS pour les opérations d'état et de lecture
+- **Services Applicatifs**
+  - Coordination de la logique métier
 
 ### 3. Couche Domaine (Domain Layer) 💎
 - **Entités**
@@ -260,6 +199,10 @@ Les couches sont :
   - Contrats de persistance
   - Opérations de données
   - Abstraction du stockage
+- **Erreurs et Événements**
+  - Gestion des erreurs spécifiques et communication
+- **Politiques et Services**
+  - Règles métier et logique complexe
 
 ### 4. Couche Infrastructure (Infrastructure Layer) 🔧
 - **Implémentations Repository**
@@ -270,28 +213,37 @@ Les couches sont :
   - Intégrations API
   - Services cloud
   - Systèmes externes
+- **Adaptateurs et Persistance**
+  - Adaptation des services externes et gestion des données
 
 
 ![La Clean Architecture](./cleanLayers.svg)
 
 ## Flux de Données 🔄
 
+> 📚 Ce diagramme présente le flux de données général entre les couches. Pour des flux plus détaillés, consultez :
+> - [Flux détaillés de la couche Application](../02-layers/02-application-layer.md#diagramme-de-séquence)
+
 ```mermaid
 sequenceDiagram
-    participant UI as Vue Component
-    participant Store as Pinia Store
-    participant UseCase as Use Case
-    participant Domain as Domain Layer
-    participant Infra as Infrastructure
+    participant UI as Interface Utilisateur
+    participant Store as Gestion d'État
+    participant App as Couche Application
+    participant Domain as Couche Domaine
+    participant Infra as Couche Infrastructure
 
-    UI->>Store: Action Dispatch
-    Store->>UseCase: Execute
-    UseCase->>Domain: Business Logic
-    Domain->>Infra: Data Operation
-    Infra-->>Domain: Result
-    Domain-->>UseCase: Domain Result
-    UseCase-->>Store: DTO
-    Store-->>UI: Updated State
+    Note over UI,Infra: Flux Typique d'une Action Utilisateur
+
+    UI->>Store: 1. Action Utilisateur
+    Store->>App: 2. Exécution Use Case
+    App->>Domain: 3. Logique Métier
+    Domain->>Infra: 4. Opération de Données
+    Infra-->>Domain: 5. Résultat
+    Domain-->>App: 6. Résultat Métier
+    App-->>Store: 7. Mise à jour État
+    Store-->>UI: 8. UI Actualisée
+
+    Note over UI,Infra: Les étapes peuvent varier selon le cas d'utilisation
 ```
 
 
@@ -348,12 +300,14 @@ sequenceDiagram
 
 ## Pour résumer 📝
 
-La Clean Architecture, combinée avec Vue.js et TypeScript, offre une base solide pour développer des applications robustes et maintenables. La séparation des préoccupations garantit que chaque partie du code a une responsabilité unique et claire, facilitant ainsi le développement, les tests et la maintenance à long terme.
+La Clean Architecture, combinée avec Vue.js et TypeScript, offre une base solide pour développer des applications robustes et maintenables.
+La séparation des préoccupations garantit que chaque partie du code a une responsabilité unique et claire, facilitant ainsi le développement, les tests et la maintenance à long terme.
 
 ## Pour la suite 🔜
 
-Nous allons nous préoccuper pour la suite de cette architecture :
 
+
+Nous allons nous préoccuper pour la suite de cette architecture :
 
 ```mermaid
 ---
@@ -369,6 +323,12 @@ graph TB
     classDef presentation fill:#fbb,stroke:#333,stroke-width:2px
     classDef shared fill:#ddd,stroke:#333,stroke-width:2px
     classDef store fill:#ff9,stroke:#333,stroke-width:2px
+    style SharedLayer fill:#ddd
+    style DomainLayer fill:#BBDEFB
+    style ApplicationLayer fill:#FFF9C4
+    style InfrastructureLayer fill:#E1BEE7
+    style PresentationLayer fill:#C8E6C9
+    style StoreLayer fill:#C8E6C9
 
     %% Domain Layer
     subgraph DomainLayer["Domain Layer"]

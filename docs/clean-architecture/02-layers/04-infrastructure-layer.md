@@ -1,6 +1,10 @@
 # Couche Infrastructure (Infrastructure Layer) 🔧
 
+## Vue d'ensemble
 
+La couche infrastructure fournit les implémentations concrètes des interfaces définies par le domaine et gère les interactions avec les systèmes externes.
+
+> 🔗 Pour voir la place de cette couche dans l'architecture globale, consultez le [diagramme général](../01-introduction/01-overview.md#structure-simplifiée-de-la-clean-architecture-).
 
 ```mermaid
 graph TB
@@ -10,13 +14,16 @@ graph TB
     classDef adapter fill:#E1FFE4,stroke:#6BFF6B,stroke-width:2px;
     classDef external fill:#FFE8D1,stroke:#FFB86B,stroke-width:2px;
     classDef mapper fill:#D1E8FF,stroke:#6B8EFF,stroke-width:2px;
+    classDef config fill:#FFE8E8,stroke:#FF8888,stroke-width:2px;
+    classDef monitor fill:#E8FFE8,stroke:#88FF88,stroke-width:2px;
 
-    subgraph InfrastructureLayer["Couche Infrastructure"]
+    subgraph InfrastructureLayer["Couche Infrastructure - Détails"]
         %% Repositories
         subgraph Repositories["Implémentations Repository"]
             StoryRepo["StoryRepository"]
             EpicRepo["EpicRepository"]
             SprintRepo["SprintRepository"]
+            UserRepo["UserRepository"]
         end
 
         %% Services
@@ -25,6 +32,8 @@ graph TB
             Cache["CacheService"]
             Logger["LoggerService"]
             EventBus["EventBusService"]
+            Auth["AuthService"]
+            Queue["QueueService"]
         end
 
         %% Adapters
@@ -32,6 +41,8 @@ graph TB
             HttpAdapter["HttpAdapter"]
             StorageAdapter["StorageAdapter"]
             LogAdapter["LogAdapter"]
+            CacheAdapter["CacheAdapter"]
+            QueueAdapter["QueueAdapter"]
         end
 
         %% Mappers
@@ -39,39 +50,71 @@ graph TB
             StoryMapper["StoryMapper"]
             EpicMapper["EpicMapper"]
             SprintMapper["SprintMapper"]
+            UserMapper["UserMapper"]
+        end
+
+        %% Configuration
+        subgraph Config["Configuration"]
+            AppConfig["AppConfig"]
+            EnvConfig["EnvConfig"]
+            SecurityConfig["SecurityConfig"]
+        end
+
+        %% Monitoring
+        subgraph Monitoring["Monitoring"]
+            Metrics["MetricsService"]
+            Tracing["TracingService"]
+            ErrorTracker["ErrorTracker"]
         end
 
         %% External Systems
         subgraph External["Systèmes Externes"]
             REST["REST API"]
             Storage["LocalStorage"]
-            Console["Console"]
+            Redis["Redis Cache"]
+            RabbitMQ["Message Queue"]
+            Sentry["Error Tracking"]
         end
 
-        %% Relations internes
+        %% Relations internes détaillées
         StoryRepo --> ApiClient
         StoryRepo --> Cache
         StoryRepo --> StoryMapper
         ApiClient --> HttpAdapter
-        Cache --> StorageAdapter
+        Cache --> CacheAdapter
         Logger --> LogAdapter
+        Queue --> QueueAdapter
+
+        %% Relations de configuration
+        AppConfig --> Services
+        SecurityConfig --> Auth
+        EnvConfig --> External
+
+        %% Relations de monitoring
+        Metrics --> Services
+        Tracing --> Adapters
+        ErrorTracker --> External
 
         %% Relations externes
         HttpAdapter --> REST
         StorageAdapter --> Storage
-        LogAdapter --> Console
+        CacheAdapter --> Redis
+        QueueAdapter --> RabbitMQ
+        ErrorTracker --> Sentry
     end
 
     %% Relations avec autres couches
-    Domain["Couche Domaine"] --> Repositories
-    Application["Couche Application"] --> Services
+    Domain["Interfaces du Domaine"] --> Repositories
+    Application["Services Applicatifs"] --> Services
 
     %% Application des styles
-    class StoryRepo,EpicRepo,SprintRepo repository;
-    class ApiClient,Cache,Logger,EventBus service;
-    class HttpAdapter,StorageAdapter,LogAdapter adapter;
-    class REST,Storage,Console external;
-    class StoryMapper,EpicMapper,SprintMapper mapper;
+    class StoryRepo,EpicRepo,SprintRepo,UserRepo repository;
+    class ApiClient,Cache,Logger,EventBus,Auth,Queue service;
+    class HttpAdapter,StorageAdapter,LogAdapter,CacheAdapter,QueueAdapter adapter;
+    class REST,Storage,Redis,RabbitMQ,Sentry external;
+    class StoryMapper,EpicMapper,SprintMapper,UserMapper mapper;
+    class AppConfig,EnvConfig,SecurityConfig config;
+    class Metrics,Tracing,ErrorTracker monitor;
 
     %% Légende
     subgraph Légende
@@ -80,6 +123,8 @@ graph TB
         A["🔌 Adapter"]
         E["🌐 External"]
         M["🔄 Mapper"]
+        C["⚙️ Config"]
+        MON["📊 Monitor"]
     end
 
     class R repository;
@@ -87,6 +132,8 @@ graph TB
     class A adapter;
     class E external;
     class M mapper;
+    class C config;
+    class MON monitor;
 ```
 
 ## Composants Principaux
@@ -461,8 +508,8 @@ export class CacheService implements CacheServiceInterface {
   }
 
   async set<T>(
-    key: string, 
-    value: T, 
+    key: string,
+    value: T,
     options?: CacheOptionsInterface
   ): Promise<void> {
     try {
@@ -628,20 +675,20 @@ export interface EventBusInterface {
 
 export class EventBus implements EventBusInterface {
   private handlers: Map<string, Set<Function>> = new Map();
-  
+
   constructor(
     private readonly logger: LoggerInterface
   ) {}
 
   async publish<T extends DomainEventInterface>(event: T): Promise<void> {
     try {
-      this.logger.debug("Publishing event", { 
+      this.logger.debug("Publishing event", {
         type: event.type,
-        payload: event 
+        payload: event
       });
 
       const handlers = this.handlers.get(event.type) ?? new Set();
-      
+
       const promises = Array.from(handlers).map(handler =>
         this.executeHandler(handler, event)
       );
@@ -765,8 +812,8 @@ export class ApiClient implements ApiClientInterface {
   }
 
   async post<T>(
-    url: string, 
-    data?: unknown, 
+    url: string,
+    data?: unknown,
     config?: RequestConfigInterface
   ): Promise<ResultInterface<ApiResponseInterface<T>>> {
     try {
@@ -788,7 +835,7 @@ export class ApiClient implements ApiClientInterface {
 
   private async prepareRequest(config: RequestConfigInterface): Promise<RequestInit> {
     const token = await this.authService.getToken();
-    
+
     return {
       ...config,
       headers: {
@@ -844,7 +891,7 @@ export class ApiClient implements ApiClientInterface {
     // Retry logic
     if (this.retryCount < this.config.retryAttempts) {
       this.retryCount++;
-      this.logger.warn("Retrying request", { 
+      this.logger.warn("Retrying request", {
         url,
         attempt: this.retryCount,
         maxAttempts: this.config.retryAttempts
@@ -1167,7 +1214,7 @@ export class ApiClient implements ApiClientInterface {
   async get<T>(url: string): Promise<ResultInterface<T>> {
     try {
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         return Result.fail(
           new InfrastructureError(`HTTP ${response.status}`)
@@ -1239,7 +1286,7 @@ export class StoryRepository implements StoryRepositoryInterface {
   async findById(id: StoryId): Promise<ResultInterface<StoryEntity>> {
     const cached = await this.cache.get(id.value);
     if (cached) return this.mapper.toDomain(cached);
-    
+
     return this.database.findById(id.value);
   }
 }
@@ -1293,10 +1340,10 @@ sequenceDiagram
 
     App->>Repo: findById(id)
     activate Repo
-    
+
     Repo->>Log: debug("Fetching story")
     Repo->>Cache: get(key)
-    
+
     alt Cache Hit
         Cache-->>Repo: cached data
         Repo->>Map: toDomain(data)
@@ -1304,16 +1351,16 @@ sequenceDiagram
         Repo-->>App: Result.ok(entity)
     else Cache Miss
         Cache-->>Repo: null
-        
+
         Repo->>Auth: getToken()
         Auth-->>Repo: token
-        
+
         Repo->>API: get("/stories/id")
         activate API
-        
+
         API->>Ext: HTTP Request
         Ext-->>API: HTTP Response
-        
+
         alt Success Response
             API-->>Repo: Result.ok(data)
             Repo->>Cache: set(key, data)
@@ -1325,29 +1372,29 @@ sequenceDiagram
             Repo->>Log: error("Failed to fetch")
             Repo-->>App: Result.fail(error)
         end
-        
+
         deactivate API
     end
-    
+
     deactivate Repo
 
     Note over App,Ext: Flux de Mise à Jour
 
     App->>Repo: save(entity)
     activate Repo
-    
+
     Repo->>Map: toDTO(entity)
     Map-->>Repo: dto
-    
+
     Repo->>API: post("/stories", dto)
     activate API
-    
+
     API->>Auth: getToken()
     Auth-->>API: token
-    
+
     API->>Ext: HTTP Request
     Ext-->>API: HTTP Response
-    
+
     alt Success Response
         API-->>Repo: Result.ok(data)
         Repo->>Cache: invalidate(key)
@@ -1359,7 +1406,7 @@ sequenceDiagram
         Repo->>Log: error("Failed to save")
         Repo-->>App: Result.fail(error)
     end
-    
+
     deactivate API
     deactivate Repo
 
@@ -1367,10 +1414,10 @@ sequenceDiagram
 
     App->>Repo: operation()
     activate Repo
-    
+
     loop Retry Logic
         Repo->>API: request()
-        
+
         alt Success Response
             API-->>Repo: Result.ok(data)
             Note over Repo: Break Retry Loop
@@ -1383,6 +1430,6 @@ sequenceDiagram
             Repo-->>App: Result.fail(error)
         end
     end
-    
+
     deactivate Repo
 ```

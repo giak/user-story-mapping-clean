@@ -5,90 +5,153 @@
 La couche application orchestre les cas d'utilisation de l'application en coordonnant les flux de données entre la couche présentation et la couche domaine.
 Elle agit comme un chef d'orchestre qui dirige les différentes opérations sans contenir de logique métier.
 
+> 🔗 Pour voir la place de cette couche dans l'architecture globale, consultez le [diagramme général](../01-introduction/01-overview.md#structure-simplifiée-de-la-clean-architecture-).
+
+## Diagrammes de Flux Détaillés 🔄
+
+> 🔗 Pour voir le flux général dans l'architecture, consultez le [diagramme de flux global](../01-introduction/01-overview.md#flux-de-données-).
+
+### 1. Flux de Création d'une Story
 
 ```mermaid
----
-config:
-  layout: elk
----
-graph TB
-    %% Styles
-    classDef useCase fill:#FFE4E1,stroke:#FF6B6B,stroke-width:2px;
-    classDef dto fill:#E6E6FA,stroke:#6B66FF,stroke-width:2px;
-    classDef service fill:#E1FFE4,stroke:#6BFF6B,stroke-width:2px;
-    classDef event fill:#FFE8D1,stroke:#FFB86B,stroke-width:2px;
-    classDef validator fill:#D1E8FF,stroke:#6B8EFF,stroke-width:2px;
+sequenceDiagram
+    participant UI as Interface (Vue)
+    participant Store as Store (Pinia)
+    participant UC as CreateStoryUseCase
+    participant Val as StoryValidator
+    participant Map as StoryMapper
+    participant Dom as Story (Domain)
+    participant Repo as StoryRepository
+    participant Event as EventBus
 
-    subgraph ApplicationLayer["Couche Application"]
-        %% Use Cases
-        subgraph UseCases["Use Cases"]
-            CreateStory["CreateStoryUseCase"]
-            UpdateStory["UpdateStoryUseCase"]
-            DeleteStory["DeleteStoryUseCase"]
+    UI->>Store: createStory(data)
+    activate Store
+    Store->>UC: execute(CreateStoryDTO)
+    activate UC
+
+    %% Validation
+    UC->>Val: validate(data)
+    Val-->>UC: ValidationResult
+
+    alt Validation Success
+        %% Création Domain
+        UC->>Dom: Story.create(data)
+        Dom-->>UC: Result<Story>
+
+        alt Creation Success
+            %% Persistence
+            UC->>Repo: save(story)
+            Repo-->>UC: Result<Story>
+
+            %% Mapping et Events
+            UC->>Map: toDTO(story)
+            Map-->>UC: StoryDTO
+            UC->>Event: publish(StoryCreatedEvent)
+
+            %% Retour
+            UC-->>Store: Result.ok(storyDTO)
+            Store-->>UI: Result.ok()
+        else Creation Error
+            Dom-->>UC: Result.fail(error)
+            UC-->>Store: Result.fail(error)
+            Store-->>UI: Result.fail(error)
         end
-
-        %% DTOs
-        subgraph DTOs["Data Transfer Objects"]
-            StoryDTO["StoryDTO"]
-            CreateDTO["CreateStoryDTO"]
-            UpdateDTO["UpdateStoryDTO"]
-        end
-
-        %% Services
-        subgraph Services["Services Application"]
-            StoryService["StoryApplicationService"]
-            ValidationService["ValidationService"]
-        end
-
-        %% Events
-        subgraph Events["Events"]
-            StoryCreated["StoryCreatedEvent"]
-            StoryUpdated["StoryUpdatedEvent"]
-        end
-
-        %% Validators
-        subgraph Validators["Validators"]
-            StoryValidator["StoryValidator"]
-            BusinessValidator["BusinessRulesValidator"]
-        end
-
-        %% Relations internes
-        CreateStory --> CreateDTO
-        UpdateStory --> UpdateDTO
-        CreateStory --> StoryValidator
-        UpdateStory --> StoryValidator
-        StoryService --> UseCases
-        ValidationService --> Validators
-        CreateStory --> StoryCreated
-        UpdateStory --> StoryUpdated
+    else Validation Error
+        UC-->>Store: Result.fail(ValidationError)
+        Store-->>UI: Result.fail(error)
     end
 
-    %% Relations externes
-    PresentationLayer["Couche Présentation"] --> UseCases
-    UseCases --> DomainLayer["Couche Domaine"]
-    Events --> PresentationLayer
+    deactivate UC
+    deactivate Store
+```
 
-    %% Application des styles
-    class CreateStory,UpdateStory,DeleteStory useCase;
-    class StoryDTO,CreateDTO,UpdateDTO dto;
-    class StoryService,ValidationService service;
-    class StoryCreated,StoryUpdated event;
-    class StoryValidator,BusinessValidator validator;
+### 2. Flux de Mise à Jour d'une Story
 
-    %% Légende
-    subgraph Légende
-        UC["🎯 Use Case"]
-        DTO["📦 DTO"]
-        SVC["⚙️ Service"]
-        EVT["📡 Event"]
-        VAL["✅ Validator"]
+```mermaid
+sequenceDiagram
+    participant UI as Interface (Vue)
+    participant Store as Store (Pinia)
+    participant UC as UpdateStoryUseCase
+    participant Val as StoryValidator
+    participant Map as StoryMapper
+    participant Dom as Story (Domain)
+    participant Repo as StoryRepository
+    participant Event as EventBus
+
+    UI->>Store: updateStory(data)
+    activate Store
+    Store->>UC: execute(UpdateStoryDTO)
+    activate UC
+
+    %% Récupération
+    UC->>Repo: findById(id)
+    Repo-->>UC: Result<Story>
+
+    alt Story Found
+        %% Validation
+        UC->>Val: validate(data)
+        Val-->>UC: ValidationResult
+
+        alt Validation Success
+            %% Mise à jour Domain
+            UC->>Dom: story.update(data)
+            Dom-->>UC: Result<Story>
+
+            alt Update Success
+                %% Persistence
+                UC->>Repo: save(story)
+                Repo-->>UC: Result<Story>
+
+                %% Mapping et Events
+                UC->>Map: toDTO(story)
+                Map-->>UC: StoryDTO
+                UC->>Event: publish(StoryUpdatedEvent)
+
+                %% Retour
+                UC-->>Store: Result.ok(storyDTO)
+                Store-->>UI: Result.ok()
+            else Update Error
+                Dom-->>UC: Result.fail(error)
+                UC-->>Store: Result.fail(error)
+                Store-->>UI: Result.fail(error)
+            end
+        else Validation Error
+            UC-->>Store: Result.fail(ValidationError)
+            Store-->>UI: Result.fail(error)
+        end
+    else Not Found
+        Repo-->>UC: Result.fail(NotFoundError)
+        UC-->>Store: Result.fail(error)
+        Store-->>UI: Result.fail(error)
     end
 
-    class UC useCase;
-    class DTO dto;
-    class SVC service;
-    class EVT event;
-    class VAL validator;
+    deactivate UC
+    deactivate Store
+```
+
+### 3. Gestion des Événements
+
+```mermaid
+sequenceDiagram
+    participant Event as EventBus
+    participant Handler1 as StoryEventHandler
+    participant Handler2 as NotificationHandler
+    participant Handler3 as CacheHandler
+    participant External as Services Externes
+
+    Note over Event,External: Traitement Parallèle des Événements
+
+    Event->>Handler1: handleStoryEvent
+    Event->>Handler2: sendNotification
+    Event->>Handler3: invalidateCache
+
+    par Parallel Processing
+        Handler1->>External: updateStatistics
+        Handler2->>External: sendEmail
+        Handler3->>External: clearCache
+    end
+
+    Note over Event,External: Chaque handler est indépendant et peut échouer sans affecter les autres
 ```
 
 ## Composants Principaux
@@ -333,7 +396,7 @@ export class StoryMapper implements MapperInterface<StoryEntityInterface, StoryD
       description: entity.description.value,
       status: entity.status.value,
       points: entity.points.value,
-      assignee: entity.assignee 
+      assignee: entity.assignee
         ? this.userMapper.toReferenceDTO(entity.assignee)
         : undefined,
       tags: Array.from(entity.tags),
@@ -476,13 +539,13 @@ export class UpdateStoryUseCase implements UpdateStoryUseCaseInterface {
   async execute(request: UpdateStoryDTOInterface): Promise<ResultInterface<void>> {
     try {
       this.logger.debug("Updating story", { request });
-      
+
       if (!request.id) {
         return Result.fail(new ValidationError("Story ID is required"));
       }
 
       const result = await this.storyRepository.update(request);
-      
+
       if (result.isFailure) {
         this.logger.error("Failed to update story", result.error);
         return Result.fail(result.error);
@@ -679,12 +742,12 @@ Ces bonnes pratiques permettent de :
 export class CompleteStoryUseCase implements CompleteStoryUseCaseInterface {
   async execute(id: string): Promise<ResultInterface<void>> {
     const story = await this.repository.findById(id);
-    
+
     // ❌ Ces règles devraient être dans le domaine
     if (story.points > 13 || !story.hasTests) {
       return Result.fail(new ValidationError("Story cannot be completed"));
     }
-    
+
     if (story.assignee === null) {
       return Result.fail(new ValidationError("Story must be assigned"));
     }
@@ -903,7 +966,7 @@ sequenceDiagram
         alt Creation Success
             UC->>Repo: save(story)
             Repo-->>UC: Result<Story>
-            
+
             UC->>Event: publish(StoryCreatedEvent)
             UC-->>Store: Result.ok(StoryDTO)
             Store-->>UI: Result.ok()
@@ -937,7 +1000,7 @@ sequenceDiagram
         alt Update Success
             UC->>Repo: save(updatedStory)
             Repo-->>UC: Result<Story>
-            
+
             UC->>Event: publish(StoryUpdatedEvent)
             UC-->>Store: Result.ok(StoryDTO)
             Store-->>UI: Result.ok()
@@ -987,7 +1050,7 @@ sequenceDiagram
     UI->>Store: action()
     Store->>UC: execute()
     UC->>Event: publish(DomainEvent)
-    
+
     par Parallel Event Handlers
         Event->>Service: handleEvent1
         Event->>Store: handleEvent2

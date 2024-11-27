@@ -10,9 +10,11 @@
   - Organisation générale du projet
 
 - [Principes Fondamentaux](./01-introduction/02-fundamental-principles.md)
+  - Pourquoi une Clean Architecture ?
+  - Comment mettre en place une Clean Architecture ?
+  - Règles de dépendance
   - Indépendance des frameworks et de l'UI
   - Testabilité et maintenabilité
-  - Règles de dépendance et d'inversion de contrôle
   - Séparation des préoccupations
 
 - [Objectifs et Bénéfices](./01-introduction/03-objectives-benefits.md)

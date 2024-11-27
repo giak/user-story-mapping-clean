@@ -31,7 +31,7 @@ export class RequiredRule implements ValidationRule {
 
 export class MinLengthRule implements ValidationRule {
   constructor(private readonly minLength: number) {}
-  
+
   validate(value: string): boolean {
     return value.length >= this.minLength;
   }
@@ -81,15 +81,15 @@ export function validerTitreStory(titre: string): Result<void> {
   if (!titre) {
     return Result.fail(new ValidationError("Le titre est requis"));
   }
-  
+
   if (titre.length < 3) {
     return Result.fail(new ValidationError("Le titre est trop court"));
   }
-  
+
   if (titre.length > 100) {
     return Result.fail(new ValidationError("Le titre est trop long"));
   }
-  
+
   return Result.ok();
 }
 
@@ -281,9 +281,9 @@ export class EpicService {
 export const ValidationTitre = {
   LONGUEUR_MIN: 3,
   LONGUEUR_MAX: 100,
-  
+
   valider(titre: string): boolean {
-    return titre.length >= this.LONGUEUR_MIN && 
+    return titre.length >= this.LONGUEUR_MIN &&
            titre.length <= this.LONGUEUR_MAX;
   }
 };
