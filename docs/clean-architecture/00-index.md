@@ -3,25 +3,26 @@
 ## Table des matières
 
 ### 1. Introduction
-- [Vue d'ensemble](./01-introduction/01-overview.md)
-  - Diagramme global de l'architecture Clean Architecture
-  - Structure en couches (Présentation, Application, Domaine, Infrastructure)
-  - Flux de données et interactions entre les couches
-  - Organisation générale du projet
+- [Concepts Fondamentaux](./01-introduction/01-core-concepts.md)
+  - Définition et objectifs de la Clean Architecture
+  - Les quatre piliers fondamentaux
+  - Bénéfices clés
+  - Prérequis et compétences
+  - Méthodologies complémentaires
 
-- [Principes Fondamentaux](./01-introduction/02-fundamental-principles.md)
-  - Pourquoi une Clean Architecture ?
-  - Comment mettre en place une Clean Architecture ?
+- [Structure des Couches](./01-introduction/02-architecture-layers.md)
+  - Vue d'ensemble de l'architecture
+  - Description détaillée des couches
+  - Flux de données et communication
   - Règles de dépendance
-  - Indépendance des frameworks et de l'UI
-  - Testabilité et maintenabilité
-  - Séparation des préoccupations
+  - Bonnes pratiques par couche
 
-- [Objectifs et Bénéfices](./01-introduction/03-objectives-benefits.md)
-  - Maintenabilité et évolutivité du code
-  - Testabilité et qualité
-  - Flexibilité et adaptabilité
-  - Réutilisabilité des composants
+- [Principes d'Implémentation](./01-introduction/03-principles.md)
+  - Principes SOLID en détail
+  - Patterns d'implémentation
+  - Exemples de code TypeScript
+  - Bonnes pratiques
+  - Gestion des erreurs et événements
 
 ### 2. Structure des Couches
 - [Couche Présentation](./02-layers/01-presentation-layer.md)

@@ -1,0 +1,23 @@
+services:
+  # Service de développement
+  dev:
+    build:
+      context: .
+      target: builder
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: pnpm dev
+    environment:
+      - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+
+  # Service de production
+  prod:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
